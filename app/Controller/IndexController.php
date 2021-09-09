@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Foundation\Facades\Log;
 use App\Foundation\Utils\Mail;
+use App\Model\Auth\User;
 use App\Model\Laboratory\Bilibili\UpUser;
 use App\Model\Laboratory\Bilibili\UpUserReport;
 use App\Service\Laboratory\Bilibili\VideoService;
@@ -22,7 +23,7 @@ class IndexController extends AbstractController
 {
     public function __construct()
     {
-
+        $a=1;
     }
 
     /**
@@ -30,10 +31,21 @@ class IndexController extends AbstractController
      * @RequestMapping(path="/test", methods="get,post")
      */
     public function index()
-   {
-       $bvid = $this->request->input('bvid');
-       return curl_get('https://api.bilibili.com/x/web-interface/view?bvid=' . $bvid);
+    {
 
+
+
+        $user = $userModel = User::query()->where('id',1)->first();
+        $a[] = $user->getRoleNames();
+        $a[] = $user->hasRole('super_admin');
+
+        $a[] = $user->syncRoles(['super_admin']);
+        $a[] = $user->getRoleNames();
+        $a[] = $user->getPermissionNames();
+       //$bvid = $this->request->input('bvid');
+       //return curl_get('https://api.bilibili.com/x/web-interface/view?bvid=' . $bvid);
+
+       return [$a];
 //        $url = 'https://m.bilibili.com/video/BV1Q624y1q7sj';
 
 

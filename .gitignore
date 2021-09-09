@@ -6,6 +6,7 @@
 .git/
 runtime/
 vendor/
+uploads/*
 .phpintel/
 .env
 .DS_Store

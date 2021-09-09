@@ -4,8 +4,8 @@ return [
     //model设置
     'models' => [
         'user' => App\Model\Auth\User::class,
-        'permission' => Donjan\Permission\Models\Permission::class,
-        'role' => Donjan\Permission\Models\Role::class,
+        'permission' => App\Model\Auth\Permission::class, 
+        'role' => App\Model\Auth\Role::class,
     ],
     //表名设置
     'table_names' => [

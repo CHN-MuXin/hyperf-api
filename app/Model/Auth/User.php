@@ -7,11 +7,11 @@ namespace App\Model\Auth;
 use App\Model\Laboratory\FriendRelation;
 use App\Model\Model;
 use App\Task\Laboratory\FriendWsTask;
-use Donjan\Permission\Traits\HasRoles;
 use Hyperf\Database\Model\Events\Created;
 use Hyperf\Database\Model\Events\Deleted;
 use Hyperf\Di\Annotation\Inject;
 use Psr\Container\ContainerInterface;
+use Donjan\Casbin\Enforcer;
 
 class User extends Model
 {
@@ -21,7 +21,7 @@ class User extends Model
      */
     protected $container;
 
-    use HasRoles;
+
     /**
      * The table associated with the model.
      *
@@ -107,5 +107,74 @@ class User extends Model
         $currentUser = $event->getModel();
         //维护其他用户好友关系
         $this->container->get(FriendWsTask::class)->deleteContactEvent($currentUser);
+    }
+
+
+    /**
+     * 判断权限
+     * @param string $role 权限名称
+     * @return bool
+     */
+    public function hasRole(string $role){
+        return Enforcer::hasRoleForUser($this->id,$role);
+    }
+    /**
+     * 添加角色给用户
+     * @param string $role 权限名称
+     * @return bool
+     */
+    public function assignRole(string $role){
+        $return = Enforcer::addRoleForUser( $this->id, $role);
+        return true;
+    }
+    /**
+     * 获取用户角色
+     * @return array
+     */
+    public function getRoleNames(){
+        $return = Enforcer::getRolesForUser( $this->id);
+        return $return;
+    }
+    /**
+     * 获取用户权限
+     * @return array
+     */
+    public function getPermissionNames(){
+        $return = Enforcer::getPermissionsForUser( $this->id);
+        return $return;
+    }
+    /**
+     * 同步角色
+     * @param array $roles 权限名称
+     * @return array
+     */
+    public function syncRoles($roles){
+        $return = Enforcer::getRolesForUser( $this->id);
+        $del = array_diff($return ,$roles);
+        $add = array_diff($roles,$return);
+        foreach ($del as  $d) {
+            Enforcer::deleteRoleForUser($this->id,$d);
+        }
+        foreach ($add as  $role) {
+            Enforcer::addRoleForUser( $this->id,$role);
+        }
+        return true;
+    }
+    /**
+     * 分配用户权限
+     * @param array $Permissions 权限名称
+     * @return array
+     */
+    public function syncPermissions($Permissions){
+        $return = Enforcer::getPermissionsForUser( $this->id);
+        $del = array_diff($return ,$Permissions);
+        $add = array_diff($Permissions,$return);
+        foreach ($del as  $d) {
+            Enforcer::deletePermissionForUser($this->id,$d);
+        }
+        foreach ($add as  $Permission) {
+            Enforcer::addPermissionForUser( $this->id,$Permission);
+        }
+        return true;
     }
 }

@@ -35,6 +35,7 @@ class LoginController extends AbstractController
      */
     public function login()
     {
+
         $params = [
             'username' =>  $this->request->input('username') ?? '',
             'password' => $this->request->input('password') ?? '',

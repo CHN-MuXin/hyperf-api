@@ -66,7 +66,7 @@ class RequestMiddleware implements MiddlewareInterface
                 if ($token !== false && $this->jwt->checkToken($token)) $isValidToken = true;
 
                 //如果校验成功
-                if ($isValidToken) {
+                if ($isValidToken) {z
                     //将用户信息放置协程上下文当中
                     $userInfo = UserService::getInstance()->getUserInfoByToken();
                     conSet('user_info', $userInfo);

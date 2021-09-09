@@ -11,7 +11,7 @@ use App\Foundation\Annotation\Explanation;
 use App\Model\Laboratory\FriendRelation;
 use App\Service\Auth\UserService;
 use App\Model\Auth\User;
-use Donjan\Permission\Models\Role;
+use App\Model\Auth\Role;
 use Hyperf\DbConnection\Db;
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Annotation\Controller;

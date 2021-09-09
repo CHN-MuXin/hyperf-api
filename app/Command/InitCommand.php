@@ -10,8 +10,11 @@ use App\Model\System\DictType;
 use App\Model\System\GlobalConfig;
 use Hyperf\Command\Command as HyperfCommand;
 use Hyperf\Command\Annotation\Command;
-use Donjan\Permission\Models\Permission;
-use Donjan\Permission\Models\Role;
+use Donjan\Casbin\Enforcer;
+use App\Model\Auth\Permission;
+use App\Model\Auth\Role;
+use Donjan\Casbin\Adapters\Mysql\DatabaseAdapter;
+use Donjan\Casbin\Adapters\Mysql\Rule;
 
 /**
  * @Command
@@ -37,22 +40,25 @@ class InitCommand extends HyperfCommand
      */
     public function handle()
     {
+        $user = User::query()->where('id',1)->first();
         //初始化添加一个默认用户以及一个超级管理员角色
-        if (User::query()->where('username', 'admin@admin.com')->first()) {
+        if ( $user ) {
             $this->line('该用户已经创建' . PHP_EOL, 'warning');
+        }else{
+            $user = new User();
+            $user->username = 'admin@admin.com';
+            $user->password = md5('admin@admin.com');
+            $user->status = User::STATUS_ON;
+            $user->last_login = time();
+            $user->desc = '超级用户';
+            $user->mobile = '1800000000';
+            $user->sex = User::SEX_BY_MALE;
+            $user->email = 'admin@admin.com';
+            $user->avatar = 'https://shmily-album.oss-cn-shenzhen.aliyuncs.com/admin_face/face' . rand(1, 10) .'.png';
+            $user->save();
         }
 
-        $user = new User();
-        $user->username = 'admin@admin.com';
-        $user->password = md5('admin@admin.com');
-        $user->status = User::STATUS_ON;
-        $user->last_login = time();
-        $user->desc = '超级用户';
-        $user->mobile = '1800000000';
-        $user->sex = User::SEX_BY_MALE;
-        $user->email = 'admin@admin.com';
-        $user->avatar = 'https://shmily-album.oss-cn-shenzhen.aliyuncs.com/admin_face/face' . rand(1, 10) .'.png';
-        $user->save();
+
         $super_role = [
             'name' => 'super_admin',
             'guard_name' => 'web',
@@ -92,6 +98,7 @@ class InitCommand extends HyperfCommand
 
         //添加默认角色到默认用户
         $user->assignRole($super_role->name);
+        
         // 通过内置方法 line 在 Console 输出 Hello Hyperf.
         $this->line('初始化用户成功' . PHP_EOL . '默认用户名：admin@admin.com' . PHP_EOL . '默认密码：admin@admin.com' . PHP_EOL, 'info');
     }

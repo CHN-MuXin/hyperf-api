@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Model\Auth;
 
-use Donjan\Permission\Models\Permission as DonjanPermission;
+use App\Model\Model;
 
 /**
  * 权限模型类
@@ -13,7 +13,7 @@ use Donjan\Permission\Models\Permission as DonjanPermission;
  * @Author YiYuan-Lin
  * @Date: 2020/12/3
  */
-class Permission extends DonjanPermission
+class Permission extends Model
 {
     /**
      * 声明权限类型枚举
@@ -96,7 +96,6 @@ class Permission extends DonjanPermission
     {
         $allPermissions = [];
         if (empty($user)) return $allPermissions;
-
         $superRoleHasPermission = Permission::query()->orderBy('sort', 'asc')->get()->toArray();
         $userHasPermission = objToArray($user->getAllPermissions());
         array_multisort(array_column($userHasPermission, 'sort'), SORT_ASC, $userHasPermission);
