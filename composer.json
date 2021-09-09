@@ -24,7 +24,7 @@
         "hyperf/logger": "2.2.*",
         "hyperf/memory": "2.2.*",
         "hyperf/task": "2.2.*",
-	"hyperf/crontab": "2.2.*",
+	    "hyperf/crontab": "2.2.*",
         "hyperf/process": "2.2.*",
         "hyperf/redis": "2.2.*",
         "hyperf/database": "2.2.*",

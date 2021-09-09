@@ -144,6 +144,14 @@ class User extends Model
         return $return;
     }
     /**
+     * 获取用户权限
+     * @return array
+     */
+    public function getAllPermissions(){
+        $return = Enforcer::getPermissionsForUser( $this->id);
+        return $return;
+    }
+    /**
      * 同步角色
      * @param array $roles 权限名称
      * @return array
