@@ -3,6 +3,7 @@ namespace App\Service\Auth;
 
 use App\Constants\StatusCode;
 use App\Foundation\Traits\Singleton;
+use App\Model\Auth\Role;
 use App\Service\BaseService;
 use App\Model\Auth\User;
 use Hyperf\Di\Annotation\Inject;
@@ -36,8 +37,11 @@ class UserService extends BaseService
         //获取Token解析的数据
         $parserData = $this->jwt->getParserData();
         $userId = $parserData['uid'];
-
         $userInfo = User::getOneByUid($userId);
+
+        $roleName = $userInfo->getRoleNames();
+        $roleList = Role::query()->whereIn('name', $roleName)->get();
+        $userInfo->roles = $roleList;
         return $userInfo;
     }
 }

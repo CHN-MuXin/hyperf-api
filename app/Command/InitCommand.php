@@ -10,11 +10,8 @@ use App\Model\System\DictType;
 use App\Model\System\GlobalConfig;
 use Hyperf\Command\Command as HyperfCommand;
 use Hyperf\Command\Annotation\Command;
-use Donjan\Casbin\Enforcer;
 use App\Model\Auth\Permission;
 use App\Model\Auth\Role;
-use Donjan\Casbin\Adapters\Mysql\DatabaseAdapter;
-use Donjan\Casbin\Adapters\Mysql\Rule;
 
 /**
  * @Command
@@ -40,51 +37,78 @@ class InitCommand extends HyperfCommand
      */
     public function handle()
     {
-        $user = User::query()->where('id',1)->first();
-        //初始化添加一个默认用户以及一个超级管理员角色
-        if ( $user ) {
-            $this->line('该用户已经创建' . PHP_EOL, 'warning');
-        }else{
-            $user = new User();
-            $user->username = 'admin@admin.com';
-            $user->password = md5('admin@admin.com');
-            $user->status = User::STATUS_ON;
-            $user->last_login = time();
-            $user->desc = '超级用户';
-            $user->mobile = '1800000000';
-            $user->sex = User::SEX_BY_MALE;
-            $user->email = 'admin@admin.com';
-            $user->avatar = 'https://shmily-album.oss-cn-shenzhen.aliyuncs.com/admin_face/face' . rand(1, 10) .'.png';
-            $user->save();
+        $roles = [
+            [
+                'name' => 'super_admin',
+                'guard_name' => 'web',
+                'description' => '超级管理员'
+            ]
+            ,[
+                'name' => 'default_admin',
+                'guard_name' => 'web',
+                'description' => '普通管理员'
+            ]
+            ,[
+                'name' => 'tourist_admin',
+                'guard_name' => 'web',
+                'description' => '游客'
+            ]
+        ];
+
+        foreach ($roles as $key => $role) {
+             //创建默认角色
+            $r = Role::query()->where('name', $role['name'])->first();
+            if($r){
+                $this->line('角色已经存在 '.$role['description'].'----------------------------');
+                continue;
+            }
+            Role::create($role);
         }
-
-
-        $super_role = [
-            'name' => 'super_admin',
-            'guard_name' => 'web',
-            'description' => '超级管理员'
-        ];
-
-        $default_role = [
-            'name' => 'default_admin',
-            'guard_name' => 'web',
-            'description' => '普通管理员'
-        ];
-
-        $tourist_role = [
-            'name' => 'tourist_admin',
-            'guard_name' => 'web',
-            'description' => '游客'
-        ];
-
-        //创建默认的两个角色
-        $super_role = Role::create($super_role);
-        $default_role = Role::create($default_role);
-        $tourist_role = Role::create($tourist_role);
 
         //创建权限
         $permissionList = config('permissionData');
         $this->InitPermission($permissionList);
+
+        //创建用户
+        $users=[
+            [
+                'username'  => 'admin@admin.com',
+                'password'  => 'admin@admin.com',
+                'status'    => User::STATUS_ON,
+                'desc'      => '超级用户',
+                'mobile'    => '1800000000',
+                'sex'       => User::SEX_BY_MALE,
+                'email'     => 'admin@admin.com',
+                'avatar'    => 'https://shmily-album.oss-cn-shenzhen.aliyuncs.com/admin_face/face' . rand(1, 10) .'.png',
+                'roles'     => [
+                    'super_admin'
+                ],
+            ]
+        ];
+
+        foreach ($users as $key => $value) {
+            $user = User::query()->where('username',$value['username'])->first();
+            if ( $user ) {
+                $this->line('用户' .$value['username']. '已经创建' . PHP_EOL, 'warning');
+            }else{
+                $user = new User();
+                $user->username     = $value['username'];
+                $user->password     = md5($value['password']);
+                $user->status       = $value['status'];
+                $user->last_login   = time();
+                $user->desc         = $value['desc'];
+                $user->mobile       = $value['mobile'];
+                $user->sex          = $value['sex'];
+                $user->email        = $value['email'];
+                $user->avatar       = $value['avatar'];
+                $user->save();
+            }
+            //添加默认角色到默认用户
+            foreach ($value['roles'] as  $role) {
+                $user->assignRole($role);
+            }
+            $this->line('初始化用户成功' . PHP_EOL . '默认用户名：'.$value['username'] . PHP_EOL . '默认密码：' . $value['password'] . PHP_EOL, 'info');
+        }
 
         //初始化字典数据
         $dictList = config('dictData');
@@ -95,12 +119,6 @@ class InitCommand extends HyperfCommand
             if (empty(GlobalConfig::query()->find($globalConfig['id']))) GlobalConfig::query()->insert($globalConfig);
         }
         $this->line('初始化全局参数成功', 'info');
-
-        //添加默认角色到默认用户
-        $user->assignRole($super_role->name);
-        
-        // 通过内置方法 line 在 Console 输出 Hello Hyperf.
-        $this->line('初始化用户成功' . PHP_EOL . '默认用户名：admin@admin.com' . PHP_EOL . '默认密码：admin@admin.com' . PHP_EOL, 'info');
     }
 
     public function InitPermission(array $PermissionList,$pid = 0)
