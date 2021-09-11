@@ -18,6 +18,7 @@ use App\Middleware\RequestMiddleware;
 use App\Middleware\PermissionMiddleware;
 use Hyperf\HttpServer\Annotation\Middlewares;
 use Hyperf\HttpServer\Annotation\RequestMapping;
+use Donjan\Casbin\Enforcer;
 
 /**
  * 权限控制器
@@ -349,11 +350,6 @@ class PermissionController extends AbstractController
 
         $roleModel = Role::findById(intval($params['role_id']));
 
-        //先清空当前角色所有权限
-        Db::table('role_has_permissions')
-            ->where('role_id', $params['role_id'])
-            ->delete();
-
         if (!$roleModel->syncPermissions($params['role_has_permission'])) $this->throwExp(StatusCode::ERR_EXCEPTION, '分配角色权限失败');
         return $this->successByMessage( '分配角色权限成功');
     }
@@ -394,7 +390,13 @@ class PermissionController extends AbstractController
             $roleList = Role::query()->whereIn('name', $roleName)->get();
             $roleHasPermission = [];
             foreach ($roleList as $role)  {
-                $roleHasPermission = array_merge($roleHasPermission, array_column($role->permissions->toArray(), 'name'));
+                $list = Enforcer::getPermissionsForUser('role_'.$role->id);
+                $o_Permissions=[];
+                foreach ($list as $value) {
+                    $o_Permissions[]=$value[1];
+                }
+                $permissions = Permission::query()->whereIn('name',$o_Permissions)->get();
+                $roleHasPermission = array_merge($permissions, array_column($role->permissions->toArray(), 'name'));
             }
             $roleHasPermission = array_values(array_unique($roleHasPermission));
             $userHasPermission = array_diff($params['user_has_permission'], $roleHasPermission);

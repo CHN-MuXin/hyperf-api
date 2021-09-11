@@ -140,16 +140,26 @@ class User extends Model
      * @return array
      */
     public function getPermissionNames(){
-        $return = Enforcer::getPermissionsForUser( $this->id);
-        return $return;
+        $list = Enforcer::getPermissionsForUser( $this->id);
+
+        $o_Permissions=[];
+        foreach ($list as $value) {
+            $o_Permissions[]=$value[1];
+        }
+        return $o_Permissions;
     }
     /**
      * 获取用户权限
      * @return array
      */
     public function getAllPermissions(){
-        $return = Enforcer::getPermissionsForUser( $this->id);
-        return $return;
+        $list = Enforcer::getPermissionsForUser( $this->id);
+
+        $o_Permissions=[];
+        foreach ($list as $value) {
+            $o_Permissions[]=$value[1];
+        }
+        return Permission::query()->whereIn('name',$o_Permissions)->get();
     }
     /**
      * 同步角色
@@ -174,9 +184,13 @@ class User extends Model
      * @return array
      */
     public function syncPermissions($Permissions){
-        $return = Enforcer::getPermissionsForUser( $this->id);
-        $del = array_diff($return ,$Permissions);
-        $add = array_diff($Permissions,$return);
+        $list = Enforcer::getPermissionsForUser( $this->id);
+        $o_Permissions=[];
+        foreach ($list as $value) {
+            $o_Permissions[]=$value[1];
+        }
+        $del = array_diff($o_Permissions ,$Permissions);
+        $add = array_diff($Permissions,$o_Permissions);
         foreach ($del as  $d) {
             Enforcer::deletePermissionForUser($this->id,$d);
         }
