@@ -141,12 +141,25 @@ class User extends Model
      */
     public function getPermissionNames(){
         $list = Enforcer::getPermissionsForUser( $this->id);
-
-        $o_Permissions=[];
+        $all_Permissions=[];
         foreach ($list as $value) {
-            $o_Permissions[]=$value[1];
+            $all_Permissions[]=$value[1];
         }
-        return $o_Permissions;
+        //获取用户所有角色
+        $roles = $this->getRoleNames();
+        $roles = Role::query()->whereIn('name',$roles)->get();
+        //获取角色权限
+        foreach ($roles as $key => $role) {
+            $list = Enforcer::getPermissionsForUser('role_'.$role->id);
+            $o_Permissions=[];
+            foreach ($list as $value) {
+                $o_Permissions[]=$value[1];
+            }
+            if( $o_Permissions ){
+                $all_Permissions = array_merge($all_Permissions,$o_Permissions);
+            }
+        }
+        return  $all_Permissions;
     }
     /**
      * 获取用户权限
@@ -154,12 +167,29 @@ class User extends Model
      */
     public function getAllPermissions(){
         $list = Enforcer::getPermissionsForUser( $this->id);
-
         $o_Permissions=[];
         foreach ($list as $value) {
             $o_Permissions[]=$value[1];
         }
-        return Permission::query()->whereIn('name',$o_Permissions)->get();
+        $new_Permissions = Permission::query()->whereIn('name',$o_Permissions)->get()->toArray();
+        //获取用户所有角色
+        $roles = $this->getRoleNames();
+        $roles = Role::query()->whereIn('name',$roles)->get();
+        //获取角色权限
+        foreach ($roles as $key => $role) {
+            $list = Enforcer::getPermissionsForUser('role_'.$role->id);
+            $o_Permissions=[];
+            foreach ($list as $value) {
+                $o_Permissions[]=$value[1];
+            }
+            $o_Permissions = Permission::query()->whereIn('name',$o_Permissions)->get();
+            if($o_Permissions && $new_Permissions){
+                $new_Permissions = array_merge($new_Permissions,$o_Permissions->toArray());
+            }else if( $o_Permissions ){
+                $new_Permissions = $o_Permissions->toArray();
+            }
+        }
+        return  $new_Permissions;
     }
     /**
      * 同步角色
